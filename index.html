@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>منوی رستورانت بهارستان</title>
 <style>
-  body{font-family:Tahoma,Arial,sans-serif;background:#faf6ef;margin:0;color:#2b2118}
+  body{font-family:Tahoma,Arial,sans-serif;background:#faf6ef;margin:0;color:#2b2118;padding-bottom:96px}
   header{background:#7a1f1f;color:#fff;text-align:center;padding:26px 12px}
   header h1{margin:0;font-size:26px}
   header p{margin:6px 0 0;font-size:14px;opacity:.9}
@@ -15,36 +15,85 @@
   .item b{font-size:16px}
   .item small{display:block;color:#8a7a63;margin-top:3px}
   .price{color:#7a1f1f;font-weight:bold;white-space:nowrap}
+  .qty{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .qty button{width:32px;height:32px;border-radius:50%;border:1px solid #7a1f1f;background:#fff;color:#7a1f1f;font-size:19px;line-height:1;cursor:pointer}
+  .qty button.plus{background:#7a1f1f;color:#fff}
+  .qty span{min-width:22px;text-align:center;font-weight:bold}
   footer{text-align:center;color:#8a7a63;font-size:13px;padding:18px 10px 26px}
-  .btn{display:inline-block;background:#25d366;color:#fff;text-decoration:none;padding:10px 18px;border-radius:24px;font-size:15px;margin-top:8px}
+  .bar{position:fixed;right:0;left:0;bottom:0;background:#2b2118;color:#fff;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 -3px 12px rgba(0,0,0,.2)}
+  .bar.show{display:flex}
+  .bar .sum{font-size:15px}
+  .bar .sum b{font-size:17px}
+  .order{background:#25d366;color:#fff;border:none;padding:11px 20px;border-radius:24px;font-size:16px;font-family:inherit;cursor:pointer;text-decoration:none;white-space:nowrap}
 </style>
 </head>
 <body>
 <header>
   <h1>🍽️ رستورانت بهارستان</h1>
-  <p>مزار شریف — خوش آمدید! منوی دیجیتال ما</p>
+  <p>مزار شریف — خوش آمدید! غذا را انتخاب کنید و فرمایش دهید</p>
+  <p id="tbl" style="display:none;font-weight:bold"></p>
 </header>
-<div class="wrap">
-  <h2>کباب‌ها</h2>
-  <div class="item"><div><b>کباب مرغ</b><small>با نان گرم و سلاد</small></div><span class="price">۲۵۰ افغانی</span></div>
-  <div class="item"><div><b>کباب گوسفند</b><small>با نان گرم و سلاد</small></div><span class="price">۳۵۰ افغانی</span></div>
-  <div class="item"><div><b>چوپان کباب</b><small>مخصوص بهارستان</small></div><span class="price">۴۰۰ افغانی</span></div>
-
-  <h2>غذاهای اصلی</h2>
-  <div class="item"><div><b>قابلی پلو</b><small>با گوشت گوسفند و کشمش</small></div><span class="price">۳۰۰ افغانی</span></div>
-  <div class="item"><div><b>منتو</b><small>با ماست و دال نخود</small></div><span class="price">۲۰۰ افغانی</span></div>
-  <div class="item"><div><b>آشک</b><small>با ماست سیر‌دار</small></div><span class="price">۱۸۰ افغانی</span></div>
-
-  <h2>نوشیدنی‌ها</h2>
-  <div class="item"><div><b>چای سبز</b><small>با هیل</small></div><span class="price">۳۰ افغانی</span></div>
-  <div class="item"><div><b>جوس تازه</b><small>کیله و انبه</small></div><span class="price">۸۰ افغانی</span></div>
-  <div class="item"><div><b>نوشابه</b><small>سرد</small></div><span class="price">۵۰ افغانی</span></div>
-
-  <footer>
-    سفارش و رزرو میز:<br>
-    <a class="btn" href="https://wa.me/93700000000">💬 سفارش در واتس‌اپ</a>
-    <p>این یک منوی نمونه است — ساخته‌شده برای آزمایش سیستم منوی QR</p>
-  </footer>
+<div class="wrap" id="menu"></div>
+<footer>این یک منوی نمونه است — ساخته‌شده برای آزمایش سیستم منوی QR</footer>
+<div class="bar" id="bar">
+  <div class="sum">مجموع: <b id="total">۰</b> افغانی<br><small id="count"></small></div>
+  <a class="order" id="orderBtn" href="#" target="_blank">💬 ثبت فرمایش در واتس‌اپ</a>
 </div>
+<script>
+  var WA_NUMBER = "93700000000"; // شماره واتس‌اپ رستورانت — در نسخهٔ اصلی از پنل مدیریت تنظیم می‌شود
+  var MENU = [
+    {cat:"کباب‌ها", items:[
+      {name:"کباب مرغ", desc:"با نان گرم و سلاد", price:250},
+      {name:"کباب گوسفند", desc:"با نان گرم و سلاد", price:350},
+      {name:"چوپان کباب", desc:"مخصوص بهارستان", price:400}
+    ]},
+    {cat:"غذاهای اصلی", items:[
+      {name:"قابلی پلو", desc:"با گوشت گوسفند و کشمش", price:300},
+      {name:"منتو", desc:"با ماست و دال نخود", price:200},
+      {name:"آشک", desc:"با ماست سیر‌دار", price:180}
+    ]},
+    {cat:"نوشیدنی‌ها", items:[
+      {name:"چای سبز", desc:"با هیل", price:30},
+      {name:"جوس تازه", desc:"کیله و انبه", price:80},
+      {name:"نوشابه", desc:"سرد", price:50}
+    ]}
+  ];
+  var fa = function(n){ return String(n).replace(/\d/g, function(d){ return "۰۱۲۳۴۵۶۷۸۹"[d]; }); };
+  var table = new URLSearchParams(location.search).get("table");
+  if (table) { var t = document.getElementById("tbl"); t.style.display = "block"; t.textContent = "میز شمارهٔ " + fa(table); }
+  var cart = {}; // "catIdx-itemIdx" -> qty
+  var menuEl = document.getElementById("menu");
+  MENU.forEach(function(sec, ci){
+    var h = document.createElement("h2"); h.textContent = sec.cat; menuEl.appendChild(h);
+    sec.items.forEach(function(it, ii){
+      var key = ci + "-" + ii;
+      var row = document.createElement("div"); row.className = "item";
+      row.innerHTML = '<div><b></b><small></small><div class="qty"><button class="plus">+</button><span>۰</span><button class="minus">−</button></div></div><span class="price"></span>';
+      row.querySelector("b").textContent = it.name;
+      row.querySelector("small").textContent = it.desc;
+      row.querySelector(".price").textContent = fa(it.price) + " افغانی";
+      var span = row.querySelector(".qty span");
+      row.querySelector(".plus").onclick = function(){ cart[key] = (cart[key]||0) + 1; span.textContent = fa(cart[key]); render(); };
+      row.querySelector(".minus").onclick = function(){ if (cart[key]) { cart[key]--; if (!cart[key]) delete cart[key]; } span.textContent = fa(cart[key]||0); render(); };
+      menuEl.appendChild(row);
+    });
+  });
+  function render(){
+    var total = 0, count = 0, lines = [];
+    Object.keys(cart).forEach(function(key){
+      var p = key.split("-"), it = MENU[p[0]].items[p[1]], q = cart[key];
+      total += it.price * q; count += q;
+      lines.push("• " + it.name + " × " + q + " = " + (it.price*q) + " افغانی");
+    });
+    var bar = document.getElementById("bar");
+    if (count === 0) { bar.className = "bar"; return; }
+    bar.className = "bar show";
+    document.getElementById("total").textContent = fa(total);
+    document.getElementById("count").textContent = fa(count) + " قلم انتخاب شده";
+    var msg = "سلام! فرمایش از منوی رستورانت بهارستان:\n" + lines.join("\n") + "\nمجموع: " + total + " افغانی";
+    if (table) msg += "\nمیز شماره: " + table;
+    document.getElementById("orderBtn").href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(msg);
+  }
+</script>
 </body>
 </html>
